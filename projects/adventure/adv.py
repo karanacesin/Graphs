@@ -10,7 +10,7 @@ world = World()
 
 
 # You may uncomment the smaller graphs for development and testing purposes.
-map_file = "maps/test_line.txt"
+map_file = "Graphs/projects/adventure/maps/test_line.txt"
 # map_file = "maps/test_cross.txt"
 # map_file = "maps/test_loop.txt"
 # map_file = "maps/test_loop_fork.txt"
@@ -30,78 +30,32 @@ player = Player(world.starting_room)
 traversal_path = []
 prev_dir = {'n':'s', 's':'n', 'w':'e', 'e':'w'}
 seen = {}
+exits = {}
+room = player.current_room.id
+not_seen = []
 
+exits[player.current_room.id] = player.current_room.get_exits()
+seen[player.current_room.id] = player.current_room.get_exits()
 
-def dft(current, prev = None):
+while len(seen) < len(room_graph) -1:
+            
+    if player.current_room.id not in seen:
+        exits[player.current_room.id] = player.current_room.get_exits()
+        seen[player.current_room.id] = player.current_room.get_exits()
 
-    if len(seen) < len(room_graph):
-        print('not finished')
-        room = current
-        exits = {}
-        
-        if room not in seen:
-            room_exits = player.current_room.get_exits()
+        prev = not_seen[-1]
 
-            for exit in room_exits:
-                exits[exit] = '?'
-                seen[room] = exits
-        else:
-            exits = seen[room]
+        exits[player.current_room.id].remove(prev)
 
-        if prev is not None:
-            direction = traversal_path[-1]
-            seen[room][prev_dir[direction]] = prev
-            seen[prev][direction] = room
+    while len(exits[player.current_room.id]) < 1:
+        reverse = not_seen.pop()
+        traversal_path.append(reverse)
+        player.travel(reverse)
 
-
-        if '?' in seen[room].values():
-            print('question mark')
-            not_seen = [exit for exit in room_exits if exit == '?']
-
-            if len(not_seen) != 0:
-                print('not seen not zero')
-                travels = random.choice(not_seen)
-                traversal_path.append(travels)
-
-                dft(player.current_room.id, room)
-
-        else:
-            last_room = bfs(room)
-
-            if last_room:
-                cur_room = last_room[0]
-
-                while len(last_room) > 1:
-                    for direction in seen[last_room[0]]:
-                        if seen[last_room[0]][direction] == last_room[1]:
-                            traversal_path.append(direction)
-                            cur_room = last_room.pop()
-                            break
-                
-                dft(player.current_room.id, cur_room)
-
-
-
-def bfs(start):
-    q = [[start]]
-    visited = set()
-
-    while len(q) > 0:
-        path = q.pop(0)
-        cur_room = path[-1]
-
-        if cur_room not in visited:
-            visited.add(cur_room)
-
-            if '?' in seen[cur_room].values():
-                return path
-
-            for direction in seen[cur_room].values():
-                new_path = list(path)
-                new_path.append(direction)
-                q.append(new_path)
-
-dft(player.current_room.id)
+    leave = exits[player.current_room.id].pop()
+    traversal_path.append(leave)
+    not_seen.append(prev_dir[leave])
+    player.travel(leave)
 print(f'PATH: {traversal_path}')
 
 
